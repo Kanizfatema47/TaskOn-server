@@ -19,12 +19,12 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 
-app.get('/', (req, res)=>{
+app.get('/', (req, res) => {
     res.send('server is running')
 })
 
-async function run(){
-    try{
+async function run() {
+    try {
         await client.connect();
         const taskCollection = client.db('tasklist').collection('tasks');
 
@@ -32,7 +32,7 @@ async function run(){
 
 
         //Send task to db
-        app.post("/task", async(req,res)=>{
+        app.post("/task", async (req, res) => {
             const task = req.body;
             console.log(task)
             const result = await taskCollection.insertOne(task);
@@ -41,14 +41,34 @@ async function run(){
 
         //Get tasks from db
 
-        app.get("/gettask", async(req,res)=>{
+        app.get("/gettask", async (req, res) => {
             const query = {}
             const cursor = taskCollection.find(query);
             const task = await cursor.toArray();
             res.send(task)
         })
 
-        //Edit tasks
+        // //Edit tasks
+        app.put('/task/:id', async (req, res) => {
+            const id = req.params.id;
+            const task = req.body.tasks;
+            console.log(task)
+            const result = await taskCollection.updateOne(
+                {
+                    _id : ObjectId(id)
+                },
+                {
+                    $set:{
+                        tasks:req.body.tasks
+                    }
+                   
+                },
+                {upsert:true}
+            )
+            res.send(result)
+
+        })
+
 
 
         //Delete Tasks
@@ -58,21 +78,21 @@ async function run(){
             const query = { _id: ObjectId(id) };
             const result = taskCollection.deleteOne(query);
             res.send(result);
-          });
+        });
 
-        
+
 
 
 
 
     }
-    finally{
+    finally {
 
     }
 }
 run().catch(console.dir);
 
 
-app.listen(port, ()=>{
+app.listen(port, () => {
     console.log(`port: ${port}`)
 })
